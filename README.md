@@ -46,6 +46,19 @@ Or copy the entries you want from `checks/query/*.yaml` into the `CustomChecks:`
 `.clang-tidy`, and add `custom-wrocpp-*` to `Checks:`. clang-tidy prefixes query checks with
 `custom-`, so they report as `custom-wrocpp-<name>`.
 
+## Build and use the plugin checks
+
+```bash
+cmake -S checks/plugin -B build -G Ninja \
+  -DLLVM_DIR=$(llvm-config --cmakedir) -DClang_DIR=$(llvm-config --cmakedir)/../clang
+cmake --build build
+clang-tidy -load=build/libwrocpp-tidy.so --checks='-*,wrocpp-*' -p build-of-your-project src/foo.cpp
+```
+
+Build against the same LLVM major version as the `clang-tidy` that loads it. Add `--fix` to apply
+the fix-its (`default-then-assign` for aggregates, `needless-shared-ptr` for `auto` variables), and
+`--format-style=file` to let clang-format tidy the whitespace the removed lines leave behind.
+
 ## Use the Claude Code plugin
 
 ```text

@@ -23,7 +23,16 @@ because the sanitizer build did not configure. Two earlier incidents had the sam
   `std::sort` comparators).
 - By-reference captures of `this`-owned members when the lambda is stored in the same object.
 
+## Ladder
+
+Clang's `-Wreturn-stack-address` (rung 3) already catches a lambda that captures a local by
+reference and is returned with an `auto` return type. It does not catch the `[&]` default capture
+converted to `std::function`, nor a lambda stored into a `std::function` variable or passed to a
+registry, which are the shapes in the incident. This check covers those.
+
 ## Form
 
-Plugin. The configurable `SafeCallees` list names functions that are known to call their callable
-synchronously.
+Plugin. It flags a by-reference lambda that is the operand of a `return`, or that is converted to
+one of the `CallableTypes` (default `std::function`, `std::move_only_function`,
+`std::copyable_function`). Lambdas passed to templates such as `std::for_each` are never converted,
+so they are not flagged.
