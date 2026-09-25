@@ -117,7 +117,11 @@ def main() -> int:
     findings, blocking, advisory = [], [], []
     for line in result.stdout.splitlines():
         m = DIAG_RE.match(line)
-        if not m or Path(m.group("file")).resolve() != source:
+        if not m:
+            continue
+        # clang-tidy prints paths relative to its working directory (root).
+        reported = Path(m.group("file"))
+        if (reported if reported.is_absolute() else root / reported).resolve() != source:
             continue
         for check in m.group("checks").split(","):
             finding = {
