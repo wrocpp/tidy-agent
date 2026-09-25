@@ -1,0 +1,17 @@
+# spec: docs/checks/unit-in-integer-name.md
+# To exempt boundary files (wire formats, database rows), add
+#   unless(isExpansionInFileMatching("your/boundary/.*")),
+# next to the system-header exclusion.
+Name: wrocpp-unit-in-integer-name
+Query: |
+  match valueDecl(
+    anyOf(varDecl(), fieldDecl()),
+    anyOf(hasType(isInteger()), hasType(realFloatingPointType())),
+    unless(hasType(booleanType())),
+    matchesName("([a-z0-9](Ms|Millis|Us|Micros|Ns|Nanos|Sec|Secs|Seconds|Bytes|Kb|Mb)|_(ms|us|ns|sec|secs|seconds|bytes|kb|mb))$"),
+    unless(isExpansionInSystemHeader())
+  ).bind("quantity")
+Diagnostic:
+  - BindName: quantity
+    Message: "a unit that lives only in the name is not checked; use a std::chrono duration or a units type"
+    Level: Warning

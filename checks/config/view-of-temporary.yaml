@@ -1,0 +1,7 @@
+# spec: docs/checks/view-of-temporary.md
+# Rung 2 of the ladder (ADR-0005): no new check. bugprone-dangling-handle
+# already flags a view constructed from a temporary owner, for every class in
+# HandleClasses. Add your project's view types to the list.
+Checks: "-*,bugprone-dangling-handle"
+CheckOptions:
+  bugprone-dangling-handle.HandleClasses: "std::basic_string_view;std::experimental::basic_string_view;std::span;Slice"

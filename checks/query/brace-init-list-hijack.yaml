@@ -1,0 +1,22 @@
+# spec: docs/checks/brace-init-list-hijack.md
+# Flags a braced list with exactly one element, of the class being
+# constructed, that selects an initializer_list constructor: `Value{v}` and
+# `return {v};` wrap v in a one-element list instead of copying it.
+# `std::vector<std::string>{"x"}` is not flagged: the element is a string,
+# not a vector. The plugin twin adds the {x} -> (x) fix-it.
+Name: wrocpp-brace-init-list-hijack
+Query: |
+  match cxxConstructExpr(
+    hasDeclaration(cxxConstructorDecl(
+      ofClass(cxxRecordDecl().bind("cls")),
+      hasParameter(0, hasType(hasUnqualifiedDesugaredType(recordType(hasDeclaration(
+        classTemplateSpecializationDecl(hasName("::std::initializer_list"))))))))),
+    hasDescendant(initListExpr(
+      has(cxxConstructExpr(hasType(cxxRecordDecl(equalsBoundNode("cls"))))),
+      unless(hasInit(1, expr())))),
+    unless(isExpansionInSystemHeader())
+  ).bind("list")
+Diagnostic:
+  - BindName: list
+    Message: "one-element braced list selects the initializer_list constructor and wraps the value; use parentheses to copy or convert"
+    Level: Warning

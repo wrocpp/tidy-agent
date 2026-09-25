@@ -1,0 +1,17 @@
+# spec: docs/checks/array-counted-size.md
+# A non-empty initializer is one with any element that is neither a nested
+# brace list nor an implicit value-initialization; that keeps `buf{}` out.
+Name: wrocpp-array-counted-size
+Query: |
+  match varDecl(
+    hasType(qualType(isConstQualified())),
+    hasType(hasUnqualifiedDesugaredType(recordType(hasDeclaration(
+      classTemplateSpecializationDecl(hasName("::std::array")))))),
+    hasInitializer(ignoringImplicit(initListExpr(hasDescendant(
+      expr(unless(anyOf(initListExpr(), implicitValueInitExpr()))))))),
+    unless(isExpansionInSystemHeader())
+  ).bind("table")
+Diagnostic:
+  - BindName: table
+    Message: "constant std::array with a hand-counted size; a shorter list compiles and zero-fills the tail, use std::to_array"
+    Level: Warning

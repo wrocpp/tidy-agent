@@ -1,0 +1,16 @@
+# spec: docs/checks/magic-numbers-in-tests.md
+# Integer literals only: floatingLiteral is not in the dynamic matcher
+# registry that query checks use (clang-query 23.1.1 reports it as unknown).
+# Adjust the file pattern to where your tests live.
+Name: wrocpp-magic-numbers-in-tests
+Query: |
+  match integerLiteral(
+    unless(anyOf(equals(0), equals(1))),
+    hasAncestor(binaryOperator(isComparisonOperator())),
+    unless(hasAncestor(varDecl(isConstexpr()))),
+    isExpansionInFileMatching("(^|/)tests?/")
+  ).bind("number")
+Diagnostic:
+  - BindName: number
+    Message: "bare number in a test comparison; give it a name in a constexpr constant that says where it comes from"
+    Level: Warning
