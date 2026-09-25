@@ -22,10 +22,20 @@ jobs:
           chmod +x llvm.sh
           sudo ./llvm.sh ${{ matrix.llvm }}
           sudo apt-get install -y clang-tidy-${{ matrix.llvm }} clang-tools-${{ matrix.llvm }} \
-            libclang-${{ matrix.llvm }}-dev llvm-${{ matrix.llvm }}-dev python3-yaml
+            libclang-${{ matrix.llvm }}-dev llvm-${{ matrix.llvm }}-dev ninja-build python3-yaml
           clang-tidy-${{ matrix.llvm }} --version
       - name: Query checks
         run: python3 tools/run_tests.py --clang-tidy clang-tidy-${{ matrix.llvm }}
+      - name: Build the plugin
+        run: |
+          cmake -S checks/plugin -B build -G Ninja \
+            -DLLVM_DIR=/usr/lib/llvm-${{ matrix.llvm }}/lib/cmake/llvm \
+            -DClang_DIR=/usr/lib/llvm-${{ matrix.llvm }}/lib/cmake/clang \
+            -DCMAKE_CXX_COMPILER=clang++-${{ matrix.llvm }} -DCMAKE_C_COMPILER=clang-${{ matrix.llvm }} \
+            -DCMAKE_BUILD_TYPE=Release
+          cmake --build build
+      - name: All checks with the plugin
+        run: python3 tools/run_tests.py --clang-tidy clang-tidy-${{ matrix.llvm }} --plugin "$PWD/build/libwrocpp-tidy.so"
 
   checks-macos:
     runs-on: macos-15
@@ -33,11 +43,19 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install LLVM (Homebrew)
         run: |
-          brew install llvm
+          brew install llvm ninja
           python3 -m pip install --break-system-packages pyyaml
           "$(brew --prefix llvm)/bin/clang-tidy" --version
       - name: Query checks
         run: python3 tools/run_tests.py --clang-tidy "$(brew --prefix llvm)/bin/clang-tidy"
+      - name: Build the plugin
+        run: |
+          L="$(brew --prefix llvm)"
+          cmake -S checks/plugin -B build -G Ninja -DLLVM_DIR="$L/lib/cmake/llvm" -DClang_DIR="$L/lib/cmake/clang" \
+            -DCMAKE_CXX_COMPILER="$L/bin/clang++" -DCMAKE_C_COMPILER="$L/bin/clang" -DCMAKE_BUILD_TYPE=Release
+          cmake --build build
+      - name: All checks with the plugin
+        run: python3 tools/run_tests.py --clang-tidy "$(brew --prefix llvm)/bin/clang-tidy" --plugin "$PWD/build/libwrocpp-tidy.so"
 
   hook:
     runs-on: ubuntu-24.04
