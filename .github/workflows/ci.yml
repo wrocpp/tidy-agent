@@ -1,0 +1,47 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  checks-linux:
+    # ADR-0002: 22 and 23 are releases, 24 is trunk (apt.llvm.org snapshot).
+    # All three are required.
+    strategy:
+      fail-fast: false
+      matrix:
+        llvm: [22, 23, 24]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install LLVM ${{ matrix.llvm }}
+        run: |
+          wget -q https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh ${{ matrix.llvm }}
+          sudo apt-get install -y clang-tidy-${{ matrix.llvm }} clang-tools-${{ matrix.llvm }} \
+            libclang-${{ matrix.llvm }}-dev llvm-${{ matrix.llvm }}-dev python3-yaml
+          clang-tidy-${{ matrix.llvm }} --version
+      - name: Query checks
+        run: python3 tools/run_tests.py --clang-tidy clang-tidy-${{ matrix.llvm }}
+
+  checks-macos:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install LLVM (Homebrew)
+        run: |
+          brew install llvm
+          python3 -m pip install --break-system-packages pyyaml
+          "$(brew --prefix llvm)/bin/clang-tidy" --version
+      - name: Query checks
+        run: python3 tools/run_tests.py --clang-tidy "$(brew --prefix llvm)/bin/clang-tidy"
+
+  hook:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Hook tests
+        run: python3 -m unittest discover -s plugins/tidy-agent/hooks/tests -v
