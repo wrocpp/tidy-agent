@@ -36,6 +36,10 @@ jobs:
           cmake --build build
       - name: All checks with the plugin
         run: python3 tools/run_tests.py --clang-tidy clang-tidy-${{ matrix.llvm }} --plugin "$PWD/build/libwrocpp-tidy.so"
+      - name: Hook end to end
+        env:
+          TIDY_AGENT_CLANG_TIDY: /usr/bin/clang-tidy-${{ matrix.llvm }}
+        run: python3 -m unittest discover -s plugins/tidy-agent/hooks/tests -v
 
   checks-macos:
     runs-on: macos-15
