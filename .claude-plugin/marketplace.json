@@ -1,0 +1,14 @@
+{
+  "name": "wrocpp",
+  "owner": { "name": "wro.cpp", "url": "https://wrocpp.github.io" },
+  "metadata": {
+    "description": "Deterministic clang-tidy tooling for C++ codebases worked on by AI agents, from wro.cpp."
+  },
+  "plugins": [
+    {
+      "name": "tidy-agent",
+      "source": "./plugins/tidy-agent",
+      "description": "Run clang-tidy on every C++ file the agent edits, and turn recurring agent mistakes into tested clang-tidy checks."
+    }
+  ]
+}

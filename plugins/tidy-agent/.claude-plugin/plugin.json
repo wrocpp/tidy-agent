@@ -1,0 +1,9 @@
+{
+  "name": "tidy-agent",
+  "version": "0.1.0-dev",
+  "description": "Run clang-tidy on every C++ file the agent edits, and turn recurring agent mistakes into tested clang-tidy checks.",
+  "author": { "name": "Filip Sajdak", "url": "https://wrocpp.github.io" },
+  "homepage": "https://github.com/wrocpp/tidy-agent",
+  "license": "MIT",
+  "keywords": ["c++", "clang-tidy", "static-analysis", "hooks"]
+}
